@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 // saltRounds => 1 used for testing only, 10 is recommended
 const saltRounds = 1;
+const secret = 'secretKey';
 
 module.exports = {};
 
@@ -15,8 +16,26 @@ module.exports.getUser = async (userObj) => {
   }
 };
 
-module.exports.generateToken = async (data, secret) => {
+module.exports.generateToken = async (data) => {
   return await jwt.sign(data, secret);
+};
+
+module.exports.verifyToken = async (token) => {
+  try {
+    const verifiedToken = await jwt.verify(token, secret);
+    return verifiedToken;
+  } catch (error) {
+    console.log('error.message');
+    console.log(error.message);
+    if (
+      error.message.includes('invalid signature') ||
+      error.message.includes('jwt malformed')
+    ) {
+      throw new BadDataError('Invalid Token');
+    } else {
+      throw new Error(error.message);
+    }
+  }
 };
 
 module.exports.createUser = (userEmail, userPassword) => {
