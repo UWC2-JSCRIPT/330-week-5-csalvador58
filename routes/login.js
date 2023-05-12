@@ -11,13 +11,14 @@ router.use(async (req, res, next) => {
 
   if (tokenString[0] === 'Bearer') {
     try {
-        console.log('Verifying token...')
+    //   console.log('Verifying token...');
       const verifiedToken = await userDAO.verifyToken(tokenString[1]);
-      console.log('verifiedToken');
-      console.log(verifiedToken);
+    //   console.log('verifiedToken');
+    //   console.log(verifiedToken);
 
       const user = await userDAO.getUser({ _id: verifiedToken._id });
       req.user = user ? user : {};
+      req.user.token = tokenString[1];
       next();
     } catch (error) {
       if (error instanceof userDAO.BadDataError) {
@@ -27,13 +28,14 @@ router.use(async (req, res, next) => {
       }
     }
   } else {
-    req.user = {};
+    req.user = { token: false };
     next();
   }
 });
 
-router.use('/logout', async (req, res, next) => {
-  if (req.user) {
+router.post('/logout', async (req, res, next) => {
+  console.log('Login Test - /logout');
+  if (req.user.token) {
     try {
       res.status(200).send('User logged out, token removed');
     } catch (error) {
@@ -48,7 +50,10 @@ router.post('/password', async (req, res, next) => {
   console.log('Login Test post /password');
   const { password } = req.body;
 
-  if (req.user && password !== '') {
+//   console.log('req.user');
+//   console.log(req.user);
+//   console.log(req.user && password !== '');
+  if (req.user.token && password !== '') {
     try {
       const updatedPassword = await userDAO.updateUserPassword(
         req.user._id,
@@ -83,25 +88,24 @@ router.use(async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   console.log('Login Test post /');
   const { email, password } = req.body;
-  console.log('email, password');
-  console.log(email, password);
+//   console.log('email, password');
+//   console.log(email, password);
 
   try {
     const user = await userDAO.getUser({ email: email });
-    console.log('user');
-    console.log(user);
+    // console.log('user');
+    // console.log(user);
 
     const isLoggedIn = await userDAO.validatePassword(password, user.password);
-    if (isLoggedIn) {
-      const loginToken = await userDAO.generateToken({
-        _id: user._id,
-        email: user.email,
-        roles: user.roles,
-      });
-      console.log('loginToken');
-      console.log(loginToken);
-      res.status(200).send({ token: loginToken });
-    }
+
+    const loginToken = await userDAO.generateToken({
+      _id: user._id,
+      email: user.email,
+      roles: user.roles,
+    });
+    // console.log('loginToken');
+    // console.log(loginToken);
+    res.status(200).send({ token: loginToken });
   } catch (error) {
     if (error instanceof userDAO.BadDataError) {
       res.status(401).send(error.message);

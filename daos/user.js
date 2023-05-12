@@ -7,37 +7,6 @@ const secret = 'secretKey';
 
 module.exports = {};
 
-module.exports.getUser = async (userObj) => {
-  try {
-    const user = await User.findOne(userObj).lean();
-    return user;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
-module.exports.generateToken = async (data) => {
-  return await jwt.sign(data, secret);
-};
-
-module.exports.verifyToken = async (token) => {
-  try {
-    const verifiedToken = await jwt.verify(token, secret);
-    return verifiedToken;
-  } catch (error) {
-    console.log('error.message');
-    console.log(error.message);
-    if (
-      error.message.includes('invalid signature') ||
-      error.message.includes('jwt malformed')
-    ) {
-      throw new BadDataError('Invalid Token');
-    } else {
-      throw new Error(error.message);
-    }
-  }
-};
-
 module.exports.createUser = (userEmail, userPassword) => {
   return new Promise((resolve, reject) => {
     bcrypt.hash(userPassword, saltRounds).then(async (hashedPassword) => {
@@ -59,12 +28,59 @@ module.exports.createUser = (userEmail, userPassword) => {
   });
 };
 
+module.exports.generateToken = async (data) => {
+  return await jwt.sign(data, secret);
+};
+
+module.exports.getUser = async (userObj) => {
+  try {
+    const user = await User.findOne(userObj).lean();
+    if (user) {
+      return user;
+    } else {
+      throw new Error('User does not exist');
+    }
+  } catch (error) {
+    if (error.message.includes('User does not exist')) {
+      throw new BadDataError(error.message);
+    } else {
+      throw new Error(error.message);
+    }
+  }
+};
+
+module.exports.updateUserPassword = async (userId, newPassword) => {
+  return new Promise((resolve, reject) => {
+    bcrypt.hash(newPassword, saltRounds).then(async (hashedPassword) => {
+      try {
+        const updatedPassword = await User.findOneAndUpdate(
+          { _id: userId },
+          { password: hashedPassword },
+          { new: true }
+        );
+        resolve(updatedPassword);
+      } catch (error) {
+        reject(new Error(error.message));
+      }
+    });
+  });
+};
+
 module.exports.validatePassword = async (password, hashedPassword) => {
   const passwordIsValid = await bcrypt.compare(password, hashedPassword);
   if (passwordIsValid) {
     return true;
   } else {
     throw new BadDataError('Password does not match');
+  }
+};
+
+module.exports.verifyToken = async (token) => {
+  try {
+    const verifiedToken = await jwt.verify(token, secret);
+    return verifiedToken;
+  } catch (error) {
+    throw new BadDataError(`Invalid token: ${error.message}`);
   }
 };
 
