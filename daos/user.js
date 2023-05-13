@@ -77,8 +77,7 @@ module.exports.validatePassword = async (password, hashedPassword) => {
 
 module.exports.verifyToken = async (token) => {
   try {
-    const verifiedToken = await jwt.verify(token, secret);
-    return verifiedToken;
+    return await jwt.verify(token, secret);
   } catch (error) {
     throw new BadDataError(`Invalid token: ${error.message}`);
   }

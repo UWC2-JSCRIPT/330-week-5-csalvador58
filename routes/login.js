@@ -3,47 +3,9 @@ const router = Router();
 
 const userDAO = require('../daos/user');
 
-router.use(async (req, res, next) => {
-  console.log('Middleware use test: ');
-  const tokenString = req.headers.authorization
-    ? req.headers.authorization.split(' ')
-    : [];
-
-  if (tokenString[0] === 'Bearer') {
-    try {
-    //   console.log('Verifying token...');
-      const verifiedToken = await userDAO.verifyToken(tokenString[1]);
-    //   console.log('verifiedToken');
-    //   console.log(verifiedToken);
-
-      const user = await userDAO.getUser({ _id: verifiedToken._id });
-      req.user = user ? user : {};
-      req.user.token = tokenString[1];
-      next();
-    } catch (error) {
-      if (error instanceof userDAO.BadDataError) {
-        res.status(401).send(error.message);
-      } else {
-        res.status(500).send(error.message);
-      }
-    }
-  } else {
-    req.user = { token: false };
-    next();
-  }
-});
-
 router.post('/logout', async (req, res, next) => {
   console.log('Login Test - /logout');
-  if (req.user.token) {
-    try {
-      res.status(200).send('User logged out, token removed');
-    } catch (error) {
-      res.status(500).send(error.message);
-    }
-  } else {
-    res.status(404).send('Login required');
-  }
+    res.status(404).send('Login token required');
 });
 
 router.post('/password', async (req, res, next) => {
@@ -105,7 +67,7 @@ router.post('/', async (req, res, next) => {
     });
     // console.log('loginToken');
     // console.log(loginToken);
-    res.status(200).send({ token: loginToken });
+    res.json({token: loginToken});
   } catch (error) {
     if (error instanceof userDAO.BadDataError) {
       res.status(401).send(error.message);
