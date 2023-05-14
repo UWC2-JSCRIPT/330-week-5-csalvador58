@@ -62,16 +62,12 @@ module.exports.createOrder = async (userId, items) => {
 };
 
 module.exports.getById = async (userRoles, userEmail, orderId) => {
-  console.log('orderId');
-  console.log(orderId);
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw new Error('Invalid orderId');
   }
 
   try {
     const order = await Order.findById(orderId).populate(['userId']);
-    console.log('DAOs - order');
-    console.log(order);
     if (order.userId.email === userEmail || userRoles.includes('admin')) {
       return await Order.findById(orderId).populate(['items']);
     } else {
@@ -84,6 +80,32 @@ module.exports.getById = async (userRoles, userEmail, orderId) => {
     ) {
       throw new BadDataError(error.message);
     }
+    throw new Error(error.message);
+  }
+};
+
+module.exports.getOrders = async (userRoles, userId) => {
+  try {
+    let orders = await Order.aggregate([
+      {
+        $match: { userId: userId },
+      },
+      {
+        $project: {
+          _id: 1,
+          items: 1,
+          userId: 1,
+          total: 1,
+        },
+      },
+    ]);
+
+    if (userRoles.includes('admin')) {
+      return await Order.find().lean();
+    } else {
+      return [orders[0]];
+    }
+  } catch (error) {
     throw new Error(error.message);
   }
 };
