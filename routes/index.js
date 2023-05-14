@@ -28,8 +28,8 @@ router.use(async (req, res, next) => {
 
       const user = await userDAO.getUser({ _id: verifiedToken._id });
       req.user = user ? user : {};
-      req.user.token = tokenString[1];
-    //   console.log('Valid Token')
+      req.user.isAuthorized = tokenString[1];
+      //   console.log('Valid Token')
       next();
     } catch (error) {
       if (error instanceof userDAO.BadDataError) {
@@ -40,13 +40,14 @@ router.use(async (req, res, next) => {
     }
   } else {
     // console.log('No token')
-    req.user = { token: false };
+    req.user = { isAuthorized: false };
     next();
   }
 });
 
 router.use('/login', require('./login'));
 router.use('/items', require('./items'));
+router.use('/orders', require('./orders'));
 
 router.use((err, req, res, next) => {
   console.log('Error detected: ', err);

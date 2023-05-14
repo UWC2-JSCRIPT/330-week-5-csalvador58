@@ -15,7 +15,7 @@ router.post('/password', async (req, res, next) => {
 //   console.log('req.user');
 //   console.log(req.user);
 //   console.log(req.user && password !== '');
-  if (req.user.token && password !== '') {
+  if (req.user.isAuthorized && password !== '') {
     try {
       const updatedPassword = await userDAO.updateUserPassword(
         req.user._id,
