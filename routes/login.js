@@ -2,46 +2,14 @@ const { Router } = require('express');
 const router = Router();
 
 const userDAO = require('../daos/user');
-// const isAuthorized = require('./index');
-
-const isAuthorized = async (req, res, next) => {
-  console.log('Middleware use test: ');
-  const tokenString = req.headers.authorization
-    ? req.headers.authorization.split(' ')
-    : [];
-
-  if (tokenString[0] === 'Bearer') {
-    try {
-      //   console.log('Verifying token...');
-      const verifiedToken = await userDAO.verifyToken(tokenString[1]);
-      //   console.log('verifiedToken');
-      //   console.log(verifiedToken);
-
-      const user = await userDAO.getUser({ _id: verifiedToken._id });
-      req.user = user ? user : {};
-      req.user.isAuthorized = tokenString[1];
-      //   console.log('Valid Token')
-      next();
-    } catch (error) {
-      if (error instanceof userDAO.BadDataError) {
-        res.status(401).send(error.message);
-      } else {
-        res.status(500).send(error.message);
-      }
-    }
-  } else {
-    // console.log('No token')
-    req.user = { isAuthorized: false };
-    next();
-  }
-};
+const isUserAuthorized = require('./isUserAuthorized')
 
 router.post('/logout', async (req, res, next) => {
   console.log('Login Test - /logout');
   res.status(404).send('Login token required');
 });
 
-router.post('/password', isAuthorized, async (req, res, next) => {
+router.post('/password', isUserAuthorized, async (req, res, next) => {
   console.log('Login Test post /password');
   const { password } = req.body;
 
@@ -54,6 +22,8 @@ router.post('/password', isAuthorized, async (req, res, next) => {
         req.user._id,
         password
       );
+      console.log('Password is now updated');
+      console.log(updatedPassword);
       res.status(200).send('User password is now updated.');
     } catch (error) {
       res.status(500).send(error.message);
@@ -80,7 +50,7 @@ router.use(async (req, res, next) => {
   }
 });
 
-router.post('/', isAuthorized, async (req, res, next) => {
+router.post('/', isUserAuthorized, async (req, res, next) => {
   console.log('Login Test post /');
   const { email, password } = req.body;
   //   console.log('email, password');
@@ -98,8 +68,8 @@ router.post('/', isAuthorized, async (req, res, next) => {
       email: user.email,
       roles: user.roles,
     });
-    // console.log('loginToken');
-    // console.log(loginToken);
+    console.log('loginToken');
+    console.log(loginToken);
     res.json({ token: loginToken });
   } catch (error) {
     if (error instanceof userDAO.BadDataError) {
@@ -111,7 +81,7 @@ router.post('/', isAuthorized, async (req, res, next) => {
   }
 });
 
-router.post('/signup', async (req, res, next) => {
+router.post('/signup', isUserAuthorized, async (req, res, next) => {
   console.log('Login Test post /signup');
   const { email, password } = req.body;
 

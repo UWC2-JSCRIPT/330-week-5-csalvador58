@@ -2,42 +2,12 @@ const { Router } = require('express');
 const router = Router();
 
 const orderDAO = require('../daos/order');
+const userDAO = require('../daos/user');
 const order = require('../models/order');
-// const isAuthorized = require('./index');
+const isUserAuthorized = require('./isUserAuthorized')
 
-const isAuthorized = async (req, res, next) => {
-  console.log('Middleware use test: ');
-  const tokenString = req.headers.authorization
-    ? req.headers.authorization.split(' ')
-    : [];
 
-  if (tokenString[0] === 'Bearer') {
-    try {
-      //   console.log('Verifying token...');
-      const verifiedToken = await userDAO.verifyToken(tokenString[1]);
-      //   console.log('verifiedToken');
-      //   console.log(verifiedToken);
-
-      const user = await userDAO.getUser({ _id: verifiedToken._id });
-      req.user = user ? user : {};
-      req.user.isAuthorized = tokenString[1];
-      //   console.log('Valid Token')
-      next();
-    } catch (error) {
-      if (error instanceof userDAO.BadDataError) {
-        res.status(401).send(error.message);
-      } else {
-        res.status(500).send(error.message);
-      }
-    }
-  } else {
-    // console.log('No token')
-    req.user = { isAuthorized: false };
-    next();
-  }
-};
-
-router.use(isAuthorized, async (req, res, next) => {
+router.use(isUserAuthorized, async (req, res, next) => {
   console.log('MW Orders Test - jwt token check');
   if (req.user.isAuthorized) {
     next();
@@ -86,13 +56,19 @@ router.get('/:id', async (req, res, next) => {
 });
 
 router.get('/', async (req, res, next) => {
-  console.log('Orders Test - get /');
+  console.log('Orders Test - get /')
 
   const userRoles = req.user.roles;
+  console.log('userRoles')
+  console.log(userRoles)
   const userId = req.user._id;
+  console.log('userId')
+  console.log(userId)
 
   try {
     const orders = await orderDAO.getOrders(userRoles, userId);
+    console.log('orders')
+    console.log(orders)
     res.json(orders);
   } catch (error) {
     if (error instanceof orderDAO.BadDataError) {
