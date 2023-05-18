@@ -5,12 +5,12 @@ const userDAO = require('../daos/user');
 const isUserAuthorized = require('./isUserAuthorized')
 
 router.post('/logout', async (req, res, next) => {
-  console.log('Login Test - /logout');
+  // console.log('Login Test - /logout');
   res.status(404).send('Login token required');
 });
 
 router.post('/password', isUserAuthorized, async (req, res, next) => {
-  console.log('Login Test post /password');
+  // console.log('Login Test post /password');
   const { password } = req.body;
 
   //   console.log('req.user');
@@ -22,8 +22,8 @@ router.post('/password', isUserAuthorized, async (req, res, next) => {
         req.user._id,
         password
       );
-      console.log('Password is now updated');
-      console.log(updatedPassword);
+      // console.log('Password is now updated');
+      // console.log(updatedPassword);
       res.status(200).send('User password is now updated.');
     } catch (error) {
       res.status(500).send(error.message);
@@ -36,7 +36,7 @@ router.post('/password', isUserAuthorized, async (req, res, next) => {
 });
 
 router.use(async (req, res, next) => {
-  console.log('Middleware use test - check email/password: ');
+  // console.log('Middleware use test - check email/password: ');
   const { email, password } = req.body;
   if (
     !password ||
@@ -51,7 +51,7 @@ router.use(async (req, res, next) => {
 });
 
 router.post('/', isUserAuthorized, async (req, res, next) => {
-  console.log('Login Test post /');
+  // console.log('Login Test post /');
   const { email, password } = req.body;
   //   console.log('email, password');
   //   console.log(email, password);
@@ -68,8 +68,8 @@ router.post('/', isUserAuthorized, async (req, res, next) => {
       email: user.email,
       roles: user.roles,
     });
-    console.log('loginToken');
-    console.log(loginToken);
+    // console.log('loginToken');
+    // console.log(loginToken);
     res.json({ token: loginToken });
   } catch (error) {
     if (error instanceof userDAO.BadDataError) {
@@ -82,7 +82,7 @@ router.post('/', isUserAuthorized, async (req, res, next) => {
 });
 
 router.post('/signup', isUserAuthorized, async (req, res, next) => {
-  console.log('Login Test post /signup');
+  // console.log('Login Test post /signup');
   const { email, password } = req.body;
 
   try {
@@ -92,7 +92,7 @@ router.post('/signup', isUserAuthorized, async (req, res, next) => {
     if (error instanceof userDAO.BadDataError) {
       res.status(409).send(error.message);
     } else {
-      console.log('500 Error', error.message);
+      // console.log('500 Error', error.message);
       res.status(500).send(error.message);
     }
   }

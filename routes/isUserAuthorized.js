@@ -1,7 +1,7 @@
 const userDAO = require('../daos/user');
 
 const isUserAuthorized = async (req, res, next) => {
-  console.log('Middleware use test: ');
+//   console.log('Middleware use test: ');
   const tokenString = req.headers.authorization
     ? req.headers.authorization.split(' ')
     : [];
@@ -12,10 +12,8 @@ const isUserAuthorized = async (req, res, next) => {
       //   console.log('Verifying token...');
       req.user = await userDAO.verifyToken(tokenString[1]);
       req.user.isAuthorized = true;
-      //   console.log('verifiedToken');
-      //   console.log(verifiedToken);
-      console.log('req.user.isAuthorized');
-      console.log(req.user.isAuthorized);
+    //   console.log('req.user.isAuthorized');
+    //   console.log(req.user.isAuthorized);
 
       // const user = await userDAO.getUser({ _id: req.user.verifiedToken._id });
       // req.user = user ? user : {};

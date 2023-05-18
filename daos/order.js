@@ -6,52 +6,35 @@ const { aggregate, findById } = require('../models/user');
 module.exports = {};
 
 module.exports.createOrder = async (userId, items) => {
-  //   console.log('DAOS - order');
-  //   console.log(items);
   try {
     // Validate items are valid IDs in db
     const validateItemsInOrder = items.map(async (item) => {
       const itemId = new mongoose.Types.ObjectId(item);
-      const isItemValid = await Item.findOne({ _id: itemId }).lean();
-
-      if (isItemValid) {
-        return itemId;
-      } else {
+      const itemDetails = await Item.findOne({ _id: itemId }).lean();
+      if (!itemDetails) {
         throw new Error('Invalid item');
       }
+      return itemDetails;
     });
 
-    const idsFromOrder = await Promise.all(validateItemsInOrder);
+    const itemsFromOrder = await Promise.all(validateItemsInOrder);
 
-    // create order without accumulated total
-    const createOrderFromIds = await Order.create({
-      userId: userId,
-      items: idsFromOrder,
-      total: 0,
-    });
-
-    // Populate the 'items' field to include 'price', then calculate total of all items in the order using reduce method
-    const total = (
-      await Order.findById(createOrderFromIds._id).populate(['items'])
-    ).items
+    // calculate total
+    const totalPriceInOrder = itemsFromOrder
       .reduce((acc, item) => {
-        if (!item.price) {
-          throw new Error('Invalid item');
-        }
         return acc + item.price;
       }, 0)
       .toFixed(2);
 
-    // Update total in db
-    const completedOrder = await Order.findOneAndUpdate(
-      { _id: createOrderFromIds._id },
-      { total: total }
-    );
+    // create order
+    const createdOrder = await Order.create({
+      userId: userId,
+      items: itemsFromOrder.map((item) => item._id),
+      total: totalPriceInOrder,
+    });
 
-    return completedOrder;
+    return createdOrder;
   } catch (error) {
-    console.log('DAOS - error');
-    console.log(error.message);
 
     if (error.message.includes('Invalid item')) {
       throw new BadDataError(error.message);
@@ -86,24 +69,10 @@ module.exports.getById = async (userRoles, userEmail, orderId) => {
 
 module.exports.getOrders = async (userRoles, userId) => {
   try {
-    let orders = await Order.aggregate([
-      {
-        $match: { userId: userId },
-      },
-      {
-        $project: {
-          _id: 1,
-          items: 1,
-          userId: 1,
-          total: 1,
-        },
-      },
-    ]);
-
     if (userRoles.includes('admin')) {
-      return await Order.find().lean();
+      return Order.find().lean().exec();
     } else {
-      return [orders[0]];
+      return Order.find({ userId: userId }).lean().exec();
     }
   } catch (error) {
     throw new Error(error.message);

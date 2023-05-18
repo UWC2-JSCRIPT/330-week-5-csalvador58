@@ -7,7 +7,7 @@ const isUserAuthorized = require('./isUserAuthorized');
 const isUserAdmin = require('./isUserAdmin');
 
 router.use(isUserAuthorized, async (req, res, next) => {
-  console.log('Middleware Items test - verify jwt token');
+  // console.log('Middleware Items test - verify jwt token');
   if (req.user.isAuthorized) {
     next();
   } else {
@@ -16,7 +16,7 @@ router.use(isUserAuthorized, async (req, res, next) => {
 });
 
 router.post('/', isUserAdmin, async (req, res, next) => {
-  console.log('Items Test - post /');
+  // console.log('Items Test - post /');
 
   // Post item if user has admin role
   // console.log('req.user.roles');
@@ -37,7 +37,7 @@ router.post('/', isUserAdmin, async (req, res, next) => {
 });
 
 router.put('/:id', isUserAdmin, async (req, res, next) => {
-  console.log('Items Test - put /:id');
+  // console.log('Items Test - put /:id');
 
   const itemId = req.params.id;
   const newData = req.body;
@@ -52,7 +52,7 @@ router.put('/:id', isUserAdmin, async (req, res, next) => {
 });
 
 router.get('/:id', async (req, res, next) => {
-  console.log('Items Test - get /:id');
+  // console.log('Items Test - get /:id');
 
   const itemId = req.params.id;
   try {
@@ -69,7 +69,7 @@ router.get('/:id', async (req, res, next) => {
 });
 
 router.get('/', async (req, res, next) => {
-  console.log('Items test - get /');
+  // console.log('Items test - get /');
 
   try {
     const items = await itemDAO.getAllItems();
