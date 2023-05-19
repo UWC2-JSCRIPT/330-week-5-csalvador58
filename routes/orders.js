@@ -56,10 +56,9 @@ router.get('/:id', async (req, res, next) => {
 
 router.get('/', async (req, res, next) => {
   // console.log('Orders Test - get /')
-  const userRoles = req.user.roles;
-  const userId = req.user._id;
+  const userId = req.user._id;  
   try {
-    const orders = await orderDAO.getOrders(userRoles, userId);
+    const orders = await orderDAO.getOrders(userId);
     // console.log('orders')
     // console.log(orders)
     res.json(orders);

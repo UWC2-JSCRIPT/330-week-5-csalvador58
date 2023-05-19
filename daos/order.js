@@ -1,6 +1,7 @@
-const { mongoose } = require('mongoose');
+const { mongoose, mongo } = require('mongoose');
 const Order = require('../models/order');
 const Item = require('../models/item');
+const User = require('../models/user');
 const { aggregate, findById } = require('../models/user');
 
 module.exports = {};
@@ -35,7 +36,6 @@ module.exports.createOrder = async (userId, items) => {
 
     return createdOrder;
   } catch (error) {
-
     if (error.message.includes('Invalid item')) {
       throw new BadDataError(error.message);
     } else {
@@ -67,13 +67,54 @@ module.exports.getById = async (userRoles, userEmail, orderId) => {
   }
 };
 
-module.exports.getOrders = async (userRoles, userId) => {
+module.exports.getOrders = async (userId) => {
   try {
-    if (userRoles.includes('admin')) {
-      return Order.find().lean().exec();
-    } else {
-      return Order.find({ userId: userId }).lean().exec();
-    }
+    const query = await User.aggregate([
+      {
+        // Match userId to _id in User collection
+        $match: {
+          _id: new mongoose.Types.ObjectId(userId),
+        },
+      },
+      {
+        // lookup all orders from orders collection and add to last stage
+        $lookup: {
+          from: 'orders',
+          pipeline: [],
+          as: 'orders',
+        },
+      },
+      {
+        // Reshape last stage to only include orders field and create a condition to
+        // only include orders matching a userId unless the user does has the 'admin' role
+        $project: {
+          orders: {
+            $cond: {
+              if: {
+                $in: ['admin', '$roles'],
+              },
+              then: '$orders',
+              else: {
+                $filter: {
+                  input: '$orders',
+                  as: 'orders',
+                  cond: {
+                    $eq: [
+                      '$$orders.userId',
+                      new mongoose.Types.ObjectId(userId),
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    console.log('DAOs - query');
+    console.log(query[0].orders);
+    return query[0].orders;
   } catch (error) {
     throw new Error(error.message);
   }
