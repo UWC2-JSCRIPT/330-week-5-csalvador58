@@ -39,11 +39,12 @@ router.get('/:id', async (req, res, next) => {
   // console.log('Orders Test - get /:id');
 
   const orderId = req.params.id;
-  const userRoles = req.user.roles;
-  const userEmail = req.user.email;
+  const userId = req.user._id; 
+  // const userRoles = req.user.roles;
+  // const userEmail = req.user.email;
 
   try {
-    const order = await orderDAO.getById(userRoles, userEmail, orderId);
+    const order = await orderDAO.getOrderById(userId, orderId);
     res.json(order);
   } catch (error) {
     if (error instanceof orderDAO.BadDataError) {

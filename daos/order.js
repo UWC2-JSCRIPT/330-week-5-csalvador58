@@ -44,15 +44,104 @@ module.exports.createOrder = async (userId, items) => {
   }
 };
 
-module.exports.getById = async (userRoles, userEmail, orderId) => {
+module.exports.getOrderById = async (userId, orderId) => {
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw new Error('Invalid orderId');
   }
 
   try {
-    const order = await Order.findById(orderId).populate(['userId']);
-    if (order.userId.email === userEmail || userRoles.includes('admin')) {
-      return await Order.findById(orderId).populate(['items']);
+    const query = await User.aggregate([
+      {
+        // Match userId to _id in User collection
+        $match: {
+          _id: new mongoose.Types.ObjectId(userId),
+        },
+      },
+      {
+        // include documents from orders collection using $lookup
+        $lookup: {
+          from: 'orders',
+          pipeline: [
+            {
+              // filter for specific order by id
+              $match: {
+                _id: new mongoose.Types.ObjectId(orderId),
+              },
+            },
+            {
+              // $unwind needed to separate each item into it's own document to
+              //   handle duplicate ids
+              $unwind: '$items',
+            },
+            {
+              // include a new field to include title and price details from
+              //  items collection
+              $lookup: {
+                from: 'items',
+                localField: 'items',
+                foreignField: '_id',
+                as: 'itemDetails',
+              },
+            },
+            // $unwind used to separate each item data set to match formatting of test
+            {
+              $unwind: '$itemDetails',
+            },
+            {
+              // group stage to match shape required for test
+              $group: {
+                _id: '$_id',
+                userId: {
+                  $first: '$userId',
+                },
+                total: {
+                  $first: '$total',
+                },
+                items: {
+                  $push: '$itemDetails',
+                },
+              },
+            },
+          ],
+          as: 'orders',
+        },
+      },
+      {
+        // Project stage added to add conditional to check if user has an
+        //   admin role to view all order. If normal user, then filter
+        //   to only orders by user.
+        $project: {
+          orders: {
+            $cond: {
+              if: {
+                $in: ['admin', '$roles'],
+              },
+              then: '$orders',
+              else: {
+                $filter: {
+                  input: '$orders',
+                  as: 'orders',
+                  cond: {
+                    $eq: [
+                      '$$orders.userId',
+                      new mongoose.Types.ObjectId(userId),
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    // console.log('DAOs- query');
+    // console.log('query[0].toObject()');
+    // console.log(query[0]);
+    // console.log('query[0].orders');
+    // console.log(query[0].orders[0]);
+    if (query[0].orders[0]) {
+      return query[0].orders[0];
     } else {
       throw new Error('Restricted access');
     }
