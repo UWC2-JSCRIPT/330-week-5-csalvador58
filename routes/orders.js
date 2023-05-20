@@ -40,9 +40,6 @@ router.get('/:id', async (req, res, next) => {
 
   const orderId = req.params.id;
   const userId = req.user._id; 
-  // const userRoles = req.user.roles;
-  // const userEmail = req.user.email;
-
   try {
     const order = await orderDAO.getOrderById(userId, orderId);
     res.json(order);
@@ -60,8 +57,6 @@ router.get('/', async (req, res, next) => {
   const userId = req.user._id;  
   try {
     const orders = await orderDAO.getOrders(userId);
-    // console.log('orders')
-    // console.log(orders)
     res.json(orders);
   } catch (error) {
     if (error instanceof orderDAO.BadDataError) {

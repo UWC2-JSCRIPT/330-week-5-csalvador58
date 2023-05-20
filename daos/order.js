@@ -201,8 +201,8 @@ module.exports.getOrders = async (userId) => {
       },
     ]);
 
-    console.log('DAOs - query');
-    console.log(query[0].orders);
+    // console.log('DAOs - query');
+    // console.log(query[0].orders);
     return query[0].orders;
   } catch (error) {
     throw new Error(error.message);

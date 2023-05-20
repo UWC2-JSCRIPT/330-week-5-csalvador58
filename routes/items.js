@@ -19,12 +19,7 @@ router.post('/', isUserAdmin, async (req, res, next) => {
   // console.log('Items Test - post /');
 
   // Post item if user has admin role
-  // console.log('req.user.roles');
-  // console.log(req.user.roles);
-
   try {
-    // console.log('req.body');
-    // console.log(req.body);
     const { title, price } = req.body;
     const storedItem = await itemDAO.storeItem({
       title: title,
@@ -62,8 +57,6 @@ router.get('/:id', async (req, res, next) => {
     if (error instanceof itemDAO.BadDataError) {
       res.status(400).send(error.message);
     }
-    //   console.log('error');
-    //   console.log(error);
     res.sendStatus(500);
   }
 });
@@ -73,8 +66,6 @@ router.get('/', async (req, res, next) => {
 
   try {
     const items = await itemDAO.getAllItems();
-    // console.log('items')
-    // console.log(items)
     res.json(items);
   } catch (error) {
     res.sendStatus(500);

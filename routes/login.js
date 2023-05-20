@@ -6,6 +6,8 @@ const isUserAuthorized = require('./isUserAuthorized')
 
 router.post('/logout', async (req, res, next) => {
   // console.log('Login Test - /logout');
+
+  // logout method to remove token/cookie from client browser
   res.status(404).send('Login token required');
 });
 
@@ -13,9 +15,6 @@ router.post('/password', isUserAuthorized, async (req, res, next) => {
   // console.log('Login Test post /password');
   const { password } = req.body;
 
-  //   console.log('req.user');
-  //   console.log(req.user);
-  //   console.log(req.user && password !== '');
   if (req.user.isAuthorized && password !== '') {
     try {
       const updatedPassword = await userDAO.updateUserPassword(
@@ -53,23 +52,21 @@ router.use(async (req, res, next) => {
 router.post('/', isUserAuthorized, async (req, res, next) => {
   // console.log('Login Test post /');
   const { email, password } = req.body;
-  //   console.log('email, password');
-  //   console.log(email, password);
 
   try {
+    // Retrieve user password from db
     const user = await userDAO.getUser({ email: email });
-    // console.log('user');
-    // console.log(user);
 
+    // Verify password input and password from db matches
     const isLoggedIn = await userDAO.validatePassword(password, user.password);
 
+    // Generate jwt token
     const loginToken = await userDAO.generateToken({
       _id: user._id,
       email: user.email,
       roles: user.roles,
     });
-    // console.log('loginToken');
-    // console.log(loginToken);
+    
     res.json({ token: loginToken });
   } catch (error) {
     if (error instanceof userDAO.BadDataError) {
